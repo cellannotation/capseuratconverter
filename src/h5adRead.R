@@ -345,9 +345,3 @@ read_h5ad <- function(path) {
 }
 
 
-file <- "wks/mur.h5ad"
-
-
-adata <- read_h5ad(file)
-print(adata$X[0:5, 0:5])
-
