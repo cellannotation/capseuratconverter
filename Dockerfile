@@ -1,4 +1,4 @@
-# FROM 
+FROM satijalab/seurat:5.0.0
 
 # FROM r-base
 

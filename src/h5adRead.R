@@ -1,6 +1,3 @@
-# The code is prepared for AnnData 0.8+ version
-# https://anndata.readthedocs.io/en/latest/fileformat-prose.html
-
 library(rhdf5)
 library(Matrix)
 
@@ -236,7 +233,7 @@ get_raw_X_var <- function(file){
 
     # If 'raw_group' is NULL, return early
     if (is.null(raw_group)) {
-        return(NaN)
+        return(raw_group)
     }
 
     raw.X <- get_X(file, paste0(path, "/X"))
@@ -337,11 +334,13 @@ read_h5ad <- function(path) {
     colnames(x) <- rownames(obs)
     obsm <- get_obsm(f)
     raw <- get_raw_X_var(f)
+    if (!is.null(raw)) {
+        rownames(raw$X) <- rownames(var)
+        colnames(raw$X) <- rownames(obs)
+    }
     layers <- get_layers(f)
     uns <- get_uns(f)
 
     anndata <- list(X = x, obs = obs, var = var, obsm = obsm, raw = raw, layers = layers, uns = uns)
     return (anndata)
 }
-
-

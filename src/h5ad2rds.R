@@ -8,8 +8,16 @@ cap_h5ad_to_seurat <- function(h5ad_path){
 
     adata <- read_h5ad(h5ad_path)
     
-    main_assay <- CreateAssay5Object(counts = adata$raw$X, data = adata$X)
-    main_assay <- AddMetaData(main_assay, adata$raw$var)  # use raw as it is wider
+    if (is.null(adata$raw)) {
+        # No raw layer
+        main_assay <- CreateAssay5Object(counts = adata$X)
+        main_assay <- AddMetaData(main_assay, adata$var)  # use raw as it is wider
+    } else {
+        # Raw layer exists
+        main_assay <- CreateAssay5Object(counts = adata$raw$X, data = adata$X)
+        main_assay <- AddMetaData(main_assay, adata$raw$var)  # use raw as it is wider
+    }
+    
     seurat_obj <- CreateSeuratObject(main_assay)
     seurat_obj <- AddMetaData(seurat_obj, adata$obs)
     Misc(seurat_obj, "uns") <- adata$uns
@@ -35,15 +43,3 @@ h5ad2rds <- function(h5ad_path) {
     srt <- cap_h5ad_to_seurat(h5ad_path)
     saveRDS(srt, rds_path)
 }
-
-# file <- "wks/mur.h5ad"
-# file <- "wks/test_csc.h5ad"
-# file <- "wks/test_dense.h5ad"
-# adata <- read_h5ad(file)
-
-# srt <- cap_h5ad_to_seurat(file)
-
-# print('\n')
-# print("#########")
-# print(srt)
-# print(head(srt$meta.data))
