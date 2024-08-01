@@ -1,7 +1,6 @@
 source("src/h5adRead.R")
 library(Seurat)
 
-
 cap_h5ad_to_seurat <- function(h5ad_path){
     # create v5 assays
     options(Seurat.object.assay.version = "v5")

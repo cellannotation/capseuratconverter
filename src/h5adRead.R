@@ -1,5 +1,10 @@
 library(rhdf5)
 library(Matrix)
+library(logger)
+
+
+# TODO: contol via the environment variable
+log_threshold("DEBUG")
 
 
 assert <- function(a, b, message){
@@ -28,6 +33,7 @@ read_encoding_type <- function(file, path){
 
 
 read_sparse_matrix <- function(file, path, format, transpose=TRUE){
+    log_debug(paste0("Start read_sparse_matrix: ", path,  " transpose=", transpose, "..."))
     assert(read_encoding_version(file, path), "0.1.0", "Sparse matrix must have encoding version 0.1.0")
     
     shape <- unlist(read_attr(file, path, 'shape'))
@@ -45,17 +51,26 @@ read_sparse_matrix <- function(file, path, format, transpose=TRUE){
     # NOTE: The X matrix in AnnData is [n_cells x n_genes]
     # But in Seurat it must be [n_genes x n_cells]
     # So, we have to convert it in most cases
-    if (transpose) { matrix <- t(matrix) }
+    if (transpose) { 
+        log_debug("transpose matrix")
+        matrix <- t(matrix) 
+    }
+    log_debug("Finish read_sparse_matrix!")
     return (matrix)
 }
 
 
 read_dense_matrix <- function(file, path, transpose){
+    log_debug(paste0("Start read_dense_matrix: ", path,  " transpose=", transpose, "..."))
     assert(read_encoding_version(file, path), "0.2.0", "Dense array must have encoding version 0.2.0")
     x <- h5read(file, path)
     # It returs transposed matrix for some reason
     # Looks like it is a feature of R, so transpose if it is not actually needed
-    if (transpose == FALSE) { x <- t(x)}
+    if (transpose == FALSE) { 
+        log_debug("transpose matrix")
+        x <- t(x)
+    }
+    log_debug("Finish read_dense_matrix!")
     return (x)
 }
 
@@ -64,7 +79,8 @@ read_dense_matrix <- function(file, path, transpose){
 #' @param file is a path to h5ad file
 #' @param path is a path to the X object in h5ad file structure
 #' @return a matrix object
-get_X <- function(file, path){    
+get_X <- function(file, path){
+    log_info("Start get_X at path ", path, " ...")    
     encoding_type <- read_encoding_type(file, path)
     
     if (encoding_type == 'csr_matrix') {
@@ -76,17 +92,20 @@ get_X <- function(file, path){
     } else {
         stop(paste0("Unknown encoding type", encoding_type))
     }
+    log_info("Finish get_X!")
     return (matrix)
 }
 
 
 read_df_col_array <- function(file, path){
+    log_debug(paste0("Start read_df_col_array: ", path, "..."))
     assert(read_encoding_version(file, path), '0.2.0', "The encoding version of <array> must be 0.2.0")
     col <- h5read(file, path)
     return (col)
 }
 
 read_df_col_str_array <- function(file, path){
+    log_debug(paste0("Start read_df_col_str_array: ", path, "..."))
     assert(read_encoding_version(file, path), '0.2.0', "The encoding version of <string-array> must be 0.2.0")
     col <- h5read(file, path)
     # strig arrays are stored as
@@ -98,6 +117,8 @@ read_df_col_str_array <- function(file, path){
 }
 
 read_df_col_cat <- function(file, path){
+    log_debug(paste0("Start read_df_col_cat: ", path, "..."))
+
     assert(read_encoding_version(file, path), '0.2.0', "The encoding version of <categorical> must be 0.2.0")
 
     code_key <- paste0(path, "/codes")
@@ -123,28 +144,26 @@ read_df_col <- function(file, path){
     col_type <- read_encoding_type(file, path)
 
     if (col_type == 'array'){
-        print("Get numberic array")
         col <- read_df_col_array(file, path)
     } else if (col_type == 'categorical'){
-        print("Get categorical")
         col <- read_df_col_cat(file, path)
     } else if (col_type == "string-array"){
-        print("Get string array")
         col <- read_df_col_str_array(file, path)
     } else {
         stop(paste0("Unknown column type", path))
     }
+    log_debug(paste0("Finish read_df_col: ", path, "..."))
     return (col)
 }
 
 
 read_df <- function(file, path){
+    log_debug(paste0("Start read_df: ", path, "..."))
     # Code assumes that df exists, so check it before call the funciton!
     assert(read_encoding_type(file, path), 'dataframe', "The encoding type of AnnData file must be dataframe")
     assert(read_encoding_version(file, path), '0.2.0', "The encoding version of AnnData file must be 0.2.0")
 
     index_col <- read_attr(file, path, '_index')
-    print(index_col)
     col_order <- read_attr(file, path, 'column-order')
     col_order <- unlist(col_order)
 
@@ -152,28 +171,33 @@ read_df <- function(file, path){
     df <- data.frame(row.names = index)
         
     for (col in col_order){
-        print(paste0("try to handle column: ", col))
         col_path <- paste0(path, "/", col)
         col_values <- read_df_col(file, col_path)
         df <- cbind(df, col = col_values)
     }
 
     colnames(df) <- col_order
-
+    log_debug("Finish read_df!")
     return (df)
 }
 
 
 get_obs <- function(file){
+    log_info("Start get_obs ...")
     path = "/obs"
-    return (read_df(file, path))
+    obs <- read_df(file, path)
+    log_info("Finish get_obs!")
+    return (obs)
 }
 
 
 get_var <- function(file, layer = NaN){
+    log_info("Start get_var ...")
     path = "/var"
     if (layer == "raw") {path <- paste0("/raw", path)}
-    return (read_df(file, path))
+    var <- read_df(file, path)
+    log_info("Finish get_var!")
+    return (var)
 }
 
 
@@ -188,6 +212,7 @@ adapt_naming <- function(name){
 
 
 get_obsm <- function(file){
+    log_info("Start get_obsm ...")
     path <- "/obsm"
     assert(read_encoding_type(file, path), "dict", "The encoding type of AnnData obsm section must be <dict>")
     assert(read_encoding_version(file, path), "0.1.0", "The encoding version of AnnData <dict> must be 0.1.0")
@@ -198,27 +223,27 @@ get_obsm <- function(file){
     obsm_list <- h5ls(obsm_group, recursive = FALSE)
     obsm <- list()
 
-    for (emb_name in obsm_list[['name']]){
-        print(emb_name)
-        
+    for (emb_name in obsm_list[['name']]){       
         emb_path = paste0(path, "/", emb_name)
         type = read_encoding_type(file, emb_path)
         if (type == 'array') {
             matrix <- read_dense_matrix(file, emb_path, FALSE)
         } else if (type == "dataframe") {
             # TODO: do we need to implement it?
-            print("DataFrame in obsm is not supported yet")
+            log_warn("DataFrame in obsm is not supported yet, skip it...")
         }else {
             stop(paste0("Unknown encoding type", emb_path))
         }
         adapted_name <- adapt_naming(emb_name)
         obsm[[adapted_name]] <- matrix
     }
+    log_info("Finish get_obsm!")
     return (obsm)
 }
 
 
 get_raw_X_var <- function(file){
+    log_info("Start get_raw_X_var ...")
     path <- "/raw"
 
     raw_group <- NULL
@@ -228,7 +253,7 @@ get_raw_X_var <- function(file){
         raw_group = H5Gopen(file, path)
         on.exit(H5Gclose(raw_group))
     }, error = function(e){
-        print("No raw data found")
+        log_info("No raw data found")
     })
 
     # If 'raw_group' is NULL, return early
@@ -239,6 +264,7 @@ get_raw_X_var <- function(file){
     raw.X <- get_X(file, paste0(path, "/X"))
     raw.var <- get_var(file, layer = "raw")
     res <- list(X = raw.X, var = raw.var)
+    log_info("Finish get_raw_X_var!")
     return (res)
 }
 
@@ -246,6 +272,7 @@ get_raw_X_var <- function(file){
 read_mapping <- function(file, path, transpose) {
     # Function assumes that the mapping exists in the file
     # Check it before the call!
+    log_debug(paste0("Start read_mapping: ", path, "..."))
 
     assert(read_encoding_type(file, path), "dict", paste0("The encoding type of AnnData mapping section ", path ," must be <dict>"))
     assert(read_encoding_version(file, path), "0.1.0", paste0("The encoding version of AnnData <dict> ", path ," must be 0.1.0"))
@@ -275,17 +302,16 @@ read_mapping <- function(file, path, transpose) {
             values <- h5read(file, element_path)
         } else {
             stop(paste0("Unsupported encoding type", element_type))
-        }
-
-        
+        }        
         new_name <- adapt_naming(element)
         result[[ new_name ]] <- values
     }
-
+    log_debug("Finish read_mapping!")
     return (result)
 }
 
 get_layers <- function(file) {
+    log_info("Start get_layers ...")
     path <- "/layers"     
     layers_group <- NULL
 
@@ -294,7 +320,7 @@ get_layers <- function(file) {
         layers_group = H5Gopen(file, path)
         on.exit(H5Gclose(layers_group))
     }, error = function(e){
-        print("No layers data found")
+        log_info("No layers data found")
     })
 
     if (is.null(layers_group)) {
@@ -305,22 +331,26 @@ get_layers <- function(file) {
     assert(read_encoding_version(file, path), "0.1.0", "The encoding version of AnnData <dict> must be 0.1.0")
 
     result <- read_mapping(file, path, transpose = TRUE)
+    log_info("Finish get_layers!")
     return (result)
 }
 
 
 get_uns <- function(file) {
+    log_info("Start get_uns ...")
     path <- "/uns"
 
     assert(read_encoding_type(file, path), "dict", "The encoding type of AnnData uns section must be <dict>")
     assert(read_encoding_version(file, path), "0.1.0", "The encoding version of AnnData <dict> must be 0.1.0")
 
     result <- read_mapping(file, path, transpose = FALSE)
+    log_info("Finish get_uns!")
     return (result)
 }
 
 
 read_h5ad <- function(path) {
+    log_info(paste0("Start read_h5ad: path=", path, " ..."))
     f <- H5Fopen(path)
     on.exit(H5Fclose(f))
     
@@ -332,9 +362,11 @@ read_h5ad <- function(path) {
     var <- get_var(f)
     rownames(x) <- rownames(var)
     colnames(x) <- rownames(obs)
+    log_debug("Rownames and colnames for X data updated")
     obsm <- get_obsm(f)
     raw <- get_raw_X_var(f)
     if (!is.null(raw)) {
+        log_debug("Update rownames and colnames for raw data")
         rownames(raw$X) <- rownames(var)
         colnames(raw$X) <- rownames(obs)
     }
@@ -342,5 +374,6 @@ read_h5ad <- function(path) {
     uns <- get_uns(f)
 
     anndata <- list(X = x, obs = obs, var = var, obsm = obsm, raw = raw, layers = layers, uns = uns)
+    log_info("Finish read_h5ad!")
     return (anndata)
 }
