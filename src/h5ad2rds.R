@@ -53,6 +53,6 @@ h5ad2rds <- function(h5ad_path) {
     log_info(paste0("Start converting h5ad: ", h5ad_path, " to Seurat v5 RDS..."))
     rds_path <- gsub(".h5ad", ".rds", h5ad_path)
     srt <- cap_h5ad_to_seurat(h5ad_path)
-    log_info(paste0("Convertion done! File saved to: ", rds_path))
     saveRDS(srt, rds_path)
+    log_info(paste0("Convertion done! File saved to: ", rds_path))
 }
