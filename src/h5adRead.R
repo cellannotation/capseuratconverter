@@ -40,7 +40,16 @@ read_sparse_matrix <- function(file, path, format, transpose=TRUE){
     data <- h5read(file, paste0(path, "/data"))  # non zero values
     indices <- h5read(file, paste0(path, "/indices"))  # column indices for csr or row indices for csc
     indptr <- h5read(file, paste0(path, "/indptr"))  # index pointers for csr or column pointers for csc
+    
+    # Ensure indices and indptr are integers
+    indices <- as.integer(indices)
+    indptr <- as.integer(indptr)
 
+    if (!is(data, "numeric")){
+        log_debug("data is not numeric, convert it now...")
+        data <- as.numeric(data)
+    }
+    
     if (format == "csr") {
         matrix <- sparseMatrix(j = indices + 1, p = indptr, x = data, dims = shape)
     } else if (format == "csc") {
