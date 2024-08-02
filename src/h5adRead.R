@@ -297,6 +297,7 @@ read_mapping <- function(file, path, transpose) {
     for (element in elements){
         element_path <- paste0(path, "/", element)
         element_type <- read_encoding_type(file, element_path)
+        log_debug(paste0("Read element: ", element, " with type: ", element_type))
         if (element_type == "dict") {
             values <- read_mapping(file, element_path)
         } else if (element_type == "dataframe") {
@@ -309,8 +310,10 @@ read_mapping <- function(file, path, transpose) {
             values <- read_sparse_matrix(file, element_path, "csc", transpose = transpose)
         } else if (element_type == "numeric-scalar" || element_type == "string") {
             values <- h5read(file, element_path)
+        } else if (element_type == "string-array") {
+            values <- read_df_col_str_array(file, element_path)
         } else {
-            stop(paste0("Unsupported encoding type", element_type))
+            stop(paste0("Unsupported encoding type ", element_type))
         }        
         new_name <- adapt_naming(element)
         result[[ new_name ]] <- values
