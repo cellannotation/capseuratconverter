@@ -1,5 +1,7 @@
 FROM satijalab/seurat:5.0.0
 
+COPY src/*.R src/
+
 RUN R -e "install.packages('logger')"
 
 CMD ["R"]
