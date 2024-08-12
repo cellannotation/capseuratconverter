@@ -3,6 +3,7 @@ source("src/endpoints.R")
 library(RestRserve)
 
 
+
 app = Application$new()
 
 app$add_get(
@@ -30,8 +31,18 @@ app$add_get(
     web_hook_failure <- .req$parameters_query$web_hook_failure
     web_hook_success <- .req$parameters_query$web_hook_success
 
-    push_to_bucket <- FALSE
-    h5ad2rds_endpoint(h5ad_url, rds_push_url, push_to_bucket)
+    tryCatch({
+      response <- h5ad2rds_endpoint(h5ad_url, rds_push_url, push_to_bucket = TRUE)
+
+      if (is.null(response) || response$status_code != 200) {
+        stop("Failed to push RDS to bucket with status code: ", response$status_code)
+        }
+      }, error = function(e) {
+        # POST(url=web_hook_failure, body=list(message = e$message), encode = "json")
+        log_error(paste0("Failed to convert h5ad to RDS: ", e$message))
+      }
+    )
+    
 
   }
 )
