@@ -1,10 +1,11 @@
 # source("src/h5ad2rds.R")
 source("src/endpoints.R")
 library(RestRserve)
-
+library(httr)
 
 
 app = Application$new()
+
 
 app$add_get(
   path = "/echo", 
@@ -37,13 +38,18 @@ app$add_get(
       if (is.null(response) || response$status_code != 200) {
         stop("Failed to push RDS to bucket with status code: ", response$status_code)
         }
+
+      # POST(
+      #   url=web_hook_success, 
+      #   body=list(message = "RDS was pushed to bucket successfully"), 
+      #   encode = "json"
+      # )
+      
       }, error = function(e) {
         # POST(url=web_hook_failure, body=list(message = e$message), encode = "json")
         log_error(paste0("Failed to convert h5ad to RDS: ", e$message))
       }
     )
-    
-
   }
 )
 

@@ -11,7 +11,7 @@ h5ad2rds_endpoint <- function(h5ad_url, rds_push_url, push_to_bucket = TRUE) {
     log_debug("Start h5ad2rds_endpoint...")
     h5ad_name <- basename(h5ad_url)
     h5ad_path <- paste0(DATA_DIR, "/", h5ad_name)
-    # download.file(h5ad_url, h5ad_path) TODO: uncomment this line
+    download.file(h5ad_url, h5ad_path) TODO: uncomment this line
     log_debug(paste0("Downloaded h5ad file to: ", h5ad_path))
 
     # Run conversion
@@ -26,7 +26,7 @@ h5ad2rds_endpoint <- function(h5ad_url, rds_push_url, push_to_bucket = TRUE) {
             config=add_headers(`content-type` = "application/octet-stream"),
             body=upload_file(rds_path)
             )
-        log_debug(paste0("Pushed RDS to bucket with response: ", resp))
+        log_debug(paste0("RDS was pushed to bucket with status code: ", resp$status_code))
     }
     return (resp)
 }
