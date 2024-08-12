@@ -4,5 +4,6 @@ COPY src/*.R src/
 
 RUN R -e "install.packages('logger')"
 RUN R -e "install.packages('RestRserve', repos = 'https://cloud.r-project.org')"
+RUN R -e "install.packages('httr2')"
 
 CMD ["R"]
