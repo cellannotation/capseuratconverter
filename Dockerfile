@@ -1,13 +1,11 @@
 FROM satijalab/seurat:5.0.0
 
-COPY src/*.R src/
+# COPY src/*.R src/
+COPY . /app
 
 RUN R -e "install.packages('logger')"
+RUN R -e "install.packages('usethis')"
+
+WORKDIR /app
 
 CMD ["R"]
-
-# FROM r-base
-
-# RUN R -e 'install.packages("BiocManager")'
-# RUN R -e 'BiocManager::install("rhdf5")'
-

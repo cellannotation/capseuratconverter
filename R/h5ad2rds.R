@@ -1,3 +1,4 @@
+library(Seurat)
 library(rhdf5)
 library(Matrix)
 library(logger)
@@ -5,6 +6,87 @@ library(logger)
 
 # TODO: contol via the environment variable
 log_threshold("DEBUG")
+
+
+#' Convert H5AD file to Seurat object
+#'
+#' @description This function creates a Seurat object from AnnData (h5ad) file.
+#'
+#' @details This function reads the h5ad file using 'rhdf5' package 
+#' and create named list with all fields existing in the file. After that, 
+#' Seurat5 object is created from the list. 
+#' The package was created for Cell Annotation Platform (CAP) project and expects that AnnData file was created with 
+#' python AnnData package of version 0.8+
+#' 
+#' Resulting Seurat object will have the only assay named 'RNA'.
+#' 
+#' @param h5ad_path The file path to the H5AD file.
+#'
+#' @return A Seurat5 object.
+#'
+#' @examples
+#' seurat_obj <- h5ad_to_seurat("/path/to/h5ad_file.h5ad")
+#' str(seurat_obj)
+#' @export 
+h5ad_to_seurat <- function(h5ad_path){
+    options(Seurat.object.assay.version = "v5")
+
+    adata <- read_h5ad(h5ad_path)
+    
+    if (is.null(adata$raw)) {
+        # No raw layer
+        log_debug("No raw layer found in h5ad file! Use assay@layers$counts=adata.X")
+        main_assay <- CreateAssay5Object(counts = adata$X)
+        log_debug("Add var as assay@meta.data")
+        main_assay <- AddMetaData(main_assay, adata$var)  # use raw as it is wider
+    } else {
+        # Raw layer exists
+        log_debug("Raw layer found in h5ad file! Use assay@layers$counts=adata.raw.X, assay@layers$data=adata.X")
+        main_assay <- CreateAssay5Object(counts = adata$raw$X, data = adata$X)
+        log_debug("Add raw.var as assay@meta.data")
+        main_assay <- AddMetaData(main_assay, adata$raw$var)  # use raw as it is wider
+    }
+    log_debug("Create Seurat ojbect from Assay5")
+    seurat_obj <- CreateSeuratObject(main_assay)
+    log_debug("Add obs section as @meta.data")
+    seurat_obj <- AddMetaData(seurat_obj, adata$obs)
+    log_debug("Add uns section as seurat@misc$uns")
+    Misc(seurat_obj, "uns") <- adata$uns
+
+    log_debug("Add obsm section as seurat@reductions")
+    for (emb in names(adata$obsm)) {
+        matrix <- adata$obsm[[emb]]
+        colnames(matrix) <-  paste0(emb, seq_len(ncol(adata$obsm[[emb]])))
+        rownames(matrix) <- rownames(adata$obs)
+        seurat_obj[[emb]] <- CreateDimReducObject(embeddings = matrix, key = paste0(emb, "_"), assay = "RNA")
+        log_debug(paste0("Added embeddings: ", emb))
+    }
+    log_debug("Finish cap_h5ad_to_seurat!")
+    return(seurat_obj)
+}
+
+
+#' Convert H5AD file to RDS format
+#'
+#' This function converts a H5AD file to RDS format.
+#'
+#' @param h5ad_path The path to the H5AD file.
+#' 
+#' @details This function creates Seurat5 object via h5ad_to_seurat and saves it to RDS file named 
+#' the same way as input file but with .rds extension.
+#'
+#' @return String, the path to the generated RDS file.
+#'
+#' @examples
+#' h5ad2rds("/path/to/h5ad_file.h5ad")
+#'
+#' @export
+h5ad2rds <- function(h5ad_path) {
+    srt <- h5ad_to_seurat(h5ad_path)
+    saveRDS(srt, rds_path)
+    log_info(paste0("Convertion done! File saved to: ", rds_path))
+    return(rds_path)
+}
 
 
 assert <- function(a, b, message){
@@ -18,17 +100,17 @@ assert <- function(a, b, message){
 
 read_attr <- function(file, path, attr){
     ats <- h5readAttributes(file, path)
-    return (ats[attr])
+    return(ats[attr])
 }
 
 
 read_encoding_version <- function(file, path){
-    return (read_attr(file, path, 'encoding-version'))
+    return(read_attr(file, path, 'encoding-version'))
 }
 
 
 read_encoding_type <- function(file, path){
-    return (read_attr(file, path, 'encoding-type'))
+    return(read_attr(file, path, 'encoding-type'))
 }
 
 
@@ -65,7 +147,7 @@ read_sparse_matrix <- function(file, path, format, transpose=TRUE){
         matrix <- t(matrix) 
     }
     log_debug("Finish read_sparse_matrix!")
-    return (matrix)
+    return(matrix)
 }
 
 
@@ -80,14 +162,10 @@ read_dense_matrix <- function(file, path, transpose){
         x <- t(x)
     }
     log_debug("Finish read_dense_matrix!")
-    return (x)
+    return(x)
 }
 
 
-#' Must get an X object (either a h5 Dataset or h5 Group)
-#' @param file is a path to h5ad file
-#' @param path is a path to the X object in h5ad file structure
-#' @return a matrix object
 get_X <- function(file, path){
     log_info("Start get_X at path ", path, " ...")    
     encoding_type <- read_encoding_type(file, path)
@@ -102,7 +180,7 @@ get_X <- function(file, path){
         stop(paste0("Unknown encoding type", encoding_type))
     }
     log_info("Finish get_X!")
-    return (matrix)
+    return(matrix)
 }
 
 
@@ -110,7 +188,7 @@ read_df_col_array <- function(file, path){
     log_debug(paste0("Start read_df_col_array: ", path, "..."))
     assert(read_encoding_version(file, path), '0.2.0', "The encoding version of <array> must be 0.2.0")
     col <- h5read(file, path)
-    return (col)
+    return(col)
 }
 
 read_df_col_str_array <- function(file, path){
@@ -122,7 +200,7 @@ read_df_col_str_array <- function(file, path){
     # with a utf-8 encoding 
     # I bet the next line is not needed but I will keep it for now
     col <- as.character(col)  
-    return (col)
+    return(col)
 }
 
 read_df_col_cat <- function(file, path){
@@ -139,11 +217,11 @@ read_df_col_cat <- function(file, path){
     # codes is a vector from 0 to n_categories - 1
     # need add -1 to handle empty values
     # TODO: check if recognized as NaN correctly
-    categories <- c(NaN, categories)
+    categories <- c(NULL, categories)
     levels <- c(-1:(length(categories)-2))
 
     col <- factor(codes, levels = levels, labels = categories)
-    return (col)
+    return(col)
 }
 
 
@@ -162,7 +240,7 @@ read_df_col <- function(file, path){
         stop(paste0("Unknown column type", path))
     }
     log_debug(paste0("Finish read_df_col: ", path, "..."))
-    return (col)
+    return(col)
 }
 
 
@@ -187,7 +265,7 @@ read_df <- function(file, path){
 
     colnames(df) <- col_order
     log_debug("Finish read_df!")
-    return (df)
+    return(df)
 }
 
 
@@ -196,7 +274,7 @@ get_obs <- function(file){
     path = "/obs"
     obs <- read_df(file, path)
     log_info("Finish get_obs!")
-    return (obs)
+    return(obs)
 }
 
 
@@ -206,7 +284,7 @@ get_var <- function(file, layer = NaN){
     if (layer == "raw") {path <- paste0("/raw", path)}
     var <- read_df(file, path)
     log_info("Finish get_var!")
-    return (var)
+    return(var)
 }
 
 
@@ -216,7 +294,7 @@ adapt_naming <- function(name){
     # X_pca -> pca; X_fake_obsm -> fake.obsm
     if (substr(name, 1, 2) == "X_") {name <- substr(name, 3, nchar(name))}
     name <- gsub("_", ".", name)
-    return (name)
+    return(name)
 }
 
 
@@ -247,7 +325,7 @@ get_obsm <- function(file){
         obsm[[adapted_name]] <- matrix
     }
     log_info("Finish get_obsm!")
-    return (obsm)
+    return(obsm)
 }
 
 
@@ -274,7 +352,7 @@ get_raw_X_var <- function(file){
     raw.var <- get_var(file, layer = "raw")
     res <- list(X = raw.X, var = raw.var)
     log_info("Finish get_raw_X_var!")
-    return (res)
+    return(res)
 }
 
 
@@ -319,7 +397,7 @@ read_mapping <- function(file, path, transpose) {
         result[[ new_name ]] <- values
     }
     log_debug("Finish read_mapping!")
-    return (result)
+    return(result)
 }
 
 get_layers <- function(file) {
@@ -344,7 +422,7 @@ get_layers <- function(file) {
 
     result <- read_mapping(file, path, transpose = TRUE)
     log_info("Finish get_layers!")
-    return (result)
+    return(result)
 }
 
 
@@ -357,7 +435,7 @@ get_uns <- function(file) {
 
     result <- read_mapping(file, path, transpose = FALSE)
     log_info("Finish get_uns!")
-    return (result)
+    return(result)
 }
 
 
@@ -387,5 +465,5 @@ read_h5ad <- function(path) {
 
     anndata <- list(X = x, obs = obs, var = var, obsm = obsm, raw = raw, layers = layers, uns = uns)
     log_info("Finish read_h5ad!")
-    return (anndata)
+    return(anndata)
 }

@@ -1,0 +1,12 @@
+Package: capseuratconverter
+Title: Convert AnnData H5ad File To Seurat5 Object
+Version: 0.0.0.9000
+Authors@R: 
+    person("Roman", "Mukhin", email = "roman@ebookapplications.com", role = c("aut", "cre")),
+    person("Evan", "Biederstedt", role = c("aut", "cre")),
+    person("Andrey", "Isaev", role = c("aut", "cre"))
+Description: The package provides a function to convert AnnData h5ad files to Seurat5 object and saves it as an RDS file. The package was created especially for the Cell Annotation Project (CAP), so please test if it suits your needs. The package is written on clear R, no reticulate dependencies. The package currently supports following AnnData fields: X, obs, var, raw.X, raw.var, obsm, uns
+License: MIT
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
