@@ -26,10 +26,7 @@ logger::log_threshold("DEBUG")
 #' @examples
 #' seurat_obj <- h5ad_to_seurat("/path/to/h5ad_file.h5ad")
 #' str(seurat_obj)
-#' @import Seurat
-#' @import rhdf5
-#' @import Matrix
-#' @import logger
+#' 
 #' @export 
 h5ad_to_seurat <- function(h5ad_path){
     options(Seurat.object.assay.version = "v5")
@@ -39,22 +36,22 @@ h5ad_to_seurat <- function(h5ad_path){
     if (is.null(adata$raw)) {
         # No raw layer
         logger::log_debug("No raw layer found in h5ad file! Use assay@layers$counts=adata.X")
-        main_assay <- CreateAssay5Object(counts = adata$X)
+        main_assay <- SeuratObject::CreateAssay5Object(counts = adata$X)
         logger::log_debug("Add var as assay@meta.data")
-        main_assay <- AddMetaData(main_assay, adata$var)  # use raw as it is wider
+        main_assay <- SeuratObject::AddMetaData(main_assay, adata$var)  # use raw as it is wider
     } else {
         # Raw layer exists
         logger::log_debug("Raw layer found in h5ad file! Use assay@layers$counts=adata.raw.X, assay@layers$data=adata.X")
-        main_assay <- CreateAssay5Object(counts = adata$raw$X, data = adata$X)
+        main_assay <- SeuratObject::CreateAssay5Object(counts = adata$raw$X, data = adata$X)
         logger::log_debug("Add raw.var as assay@meta.data")
-        main_assay <- AddMetaData(main_assay, adata$raw$var)  # use raw as it is wider
+        main_assay <- SeuratObject::AddMetaData(main_assay, adata$raw$var)  # use raw as it is wider
     }
     logger::log_debug("Create Seurat ojbect from Assay5")
-    seurat_obj <- CreateSeuratObject(main_assay)
+    seurat_obj <- SeuratObject::CreateSeuratObject(main_assay)
     logger::log_debug("Add obs section as @meta.data")
     seurat_obj <- AddMetaData(seurat_obj, adata$obs)
     logger::log_debug("Add uns section as seurat@misc$uns")
-    Misc(seurat_obj, "uns") <- adata$uns
+    SeuratObject::Misc(seurat_obj, "uns") <- adata$uns
 
     logger::log_debug("Add obsm section as seurat@reductions")
     for (emb in names(adata$obsm)) {
@@ -83,10 +80,6 @@ h5ad_to_seurat <- function(h5ad_path){
 #' @examples
 #' h5ad2rds("/path/to/h5ad_file.h5ad")
 #'
-#' @import Seurat
-#' @import rhdf5
-#' @import Matrix
-#' @import logger
 #' @export
 h5ad2rds <- function(h5ad_path) {
     srt <- h5ad_to_seurat(h5ad_path)
