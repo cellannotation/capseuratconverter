@@ -1,11 +1,10 @@
 library(Seurat)
 library(rhdf5)
 library(Matrix)
-library(logger)
 
 
 # TODO: contol via the environment variable
-log_threshold("DEBUG")
+logger::log_threshold("DEBUG")
 
 
 #' Convert H5AD file to Seurat object
@@ -27,6 +26,10 @@ log_threshold("DEBUG")
 #' @examples
 #' seurat_obj <- h5ad_to_seurat("/path/to/h5ad_file.h5ad")
 #' str(seurat_obj)
+#' @import Seurat
+#' @import rhdf5
+#' @import Matrix
+#' @import logger
 #' @export 
 h5ad_to_seurat <- function(h5ad_path){
     options(Seurat.object.assay.version = "v5")
@@ -35,33 +38,33 @@ h5ad_to_seurat <- function(h5ad_path){
     
     if (is.null(adata$raw)) {
         # No raw layer
-        log_debug("No raw layer found in h5ad file! Use assay@layers$counts=adata.X")
+        logger::log_debug("No raw layer found in h5ad file! Use assay@layers$counts=adata.X")
         main_assay <- CreateAssay5Object(counts = adata$X)
-        log_debug("Add var as assay@meta.data")
+        logger::log_debug("Add var as assay@meta.data")
         main_assay <- AddMetaData(main_assay, adata$var)  # use raw as it is wider
     } else {
         # Raw layer exists
-        log_debug("Raw layer found in h5ad file! Use assay@layers$counts=adata.raw.X, assay@layers$data=adata.X")
+        logger::log_debug("Raw layer found in h5ad file! Use assay@layers$counts=adata.raw.X, assay@layers$data=adata.X")
         main_assay <- CreateAssay5Object(counts = adata$raw$X, data = adata$X)
-        log_debug("Add raw.var as assay@meta.data")
+        logger::log_debug("Add raw.var as assay@meta.data")
         main_assay <- AddMetaData(main_assay, adata$raw$var)  # use raw as it is wider
     }
-    log_debug("Create Seurat ojbect from Assay5")
+    logger::log_debug("Create Seurat ojbect from Assay5")
     seurat_obj <- CreateSeuratObject(main_assay)
-    log_debug("Add obs section as @meta.data")
+    logger::log_debug("Add obs section as @meta.data")
     seurat_obj <- AddMetaData(seurat_obj, adata$obs)
-    log_debug("Add uns section as seurat@misc$uns")
+    logger::log_debug("Add uns section as seurat@misc$uns")
     Misc(seurat_obj, "uns") <- adata$uns
 
-    log_debug("Add obsm section as seurat@reductions")
+    logger::log_debug("Add obsm section as seurat@reductions")
     for (emb in names(adata$obsm)) {
         matrix <- adata$obsm[[emb]]
         colnames(matrix) <-  paste0(emb, seq_len(ncol(adata$obsm[[emb]])))
         rownames(matrix) <- rownames(adata$obs)
         seurat_obj[[emb]] <- CreateDimReducObject(embeddings = matrix, key = paste0(emb, "_"), assay = "RNA")
-        log_debug(paste0("Added embeddings: ", emb))
+        logger::log_debug(paste0("Added embeddings: ", emb))
     }
-    log_debug("Finish cap_h5ad_to_seurat!")
+    logger::log_debug("Finish cap_h5ad_to_seurat!")
     return(seurat_obj)
 }
 
@@ -80,11 +83,15 @@ h5ad_to_seurat <- function(h5ad_path){
 #' @examples
 #' h5ad2rds("/path/to/h5ad_file.h5ad")
 #'
+#' @import Seurat
+#' @import rhdf5
+#' @import Matrix
+#' @import logger
 #' @export
 h5ad2rds <- function(h5ad_path) {
     srt <- h5ad_to_seurat(h5ad_path)
     saveRDS(srt, rds_path)
-    log_info(paste0("Convertion done! File saved to: ", rds_path))
+    logger::log_info(paste0("Convertion done! File saved to: ", rds_path))
     return(rds_path)
 }
 
@@ -115,7 +122,7 @@ read_encoding_type <- function(file, path){
 
 
 read_sparse_matrix <- function(file, path, format, transpose=TRUE){
-    log_debug(paste0("Start read_sparse_matrix: ", path,  " transpose=", transpose, "..."))
+    logger::log_debug(paste0("Start read_sparse_matrix: ", path,  " transpose=", transpose, "..."))
     assert(read_encoding_version(file, path), "0.1.0", "Sparse matrix must have encoding version 0.1.0")
     
     shape <- unlist(read_attr(file, path, 'shape'))
@@ -128,7 +135,7 @@ read_sparse_matrix <- function(file, path, format, transpose=TRUE){
     indptr <- as.integer(indptr)
 
     if (!is(data, "numeric")){
-        log_debug("data is not numeric, convert it now...")
+        logger::log_debug("data is not numeric, convert it now...")
         data <- as.numeric(data)
     }
     
@@ -143,31 +150,31 @@ read_sparse_matrix <- function(file, path, format, transpose=TRUE){
     # But in Seurat it must be [n_genes x n_cells]
     # So, we have to convert it in most cases
     if (transpose) { 
-        log_debug("transpose matrix")
+        logger::log_debug("transpose matrix")
         matrix <- t(matrix) 
     }
-    log_debug("Finish read_sparse_matrix!")
+    logger::log_debug("Finish read_sparse_matrix!")
     return(matrix)
 }
 
 
 read_dense_matrix <- function(file, path, transpose){
-    log_debug(paste0("Start read_dense_matrix: ", path,  " transpose=", transpose, "..."))
+    logger::log_debug(paste0("Start read_dense_matrix: ", path,  " transpose=", transpose, "..."))
     assert(read_encoding_version(file, path), "0.2.0", "Dense array must have encoding version 0.2.0")
     x <- h5read(file, path)
     # It returs transposed matrix for some reason
     # Looks like it is a feature of R, so transpose if it is not actually needed
     if (transpose == FALSE) { 
-        log_debug("transpose matrix")
+        logger::log_debug("transpose matrix")
         x <- t(x)
     }
-    log_debug("Finish read_dense_matrix!")
+    logger::log_debug("Finish read_dense_matrix!")
     return(x)
 }
 
 
 get_X <- function(file, path){
-    log_info("Start get_X at path ", path, " ...")    
+    logger::log_info("Start get_X at path ", path, " ...")    
     encoding_type <- read_encoding_type(file, path)
     
     if (encoding_type == 'csr_matrix') {
@@ -179,20 +186,20 @@ get_X <- function(file, path){
     } else {
         stop(paste0("Unknown encoding type", encoding_type))
     }
-    log_info("Finish get_X!")
+    logger::log_info("Finish get_X!")
     return(matrix)
 }
 
 
 read_df_col_array <- function(file, path){
-    log_debug(paste0("Start read_df_col_array: ", path, "..."))
+    logger::log_debug(paste0("Start read_df_col_array: ", path, "..."))
     assert(read_encoding_version(file, path), '0.2.0', "The encoding version of <array> must be 0.2.0")
     col <- h5read(file, path)
     return(col)
 }
 
 read_df_col_str_array <- function(file, path){
-    log_debug(paste0("Start read_df_col_str_array: ", path, "..."))
+    logger::log_debug(paste0("Start read_df_col_str_array: ", path, "..."))
     assert(read_encoding_version(file, path), '0.2.0', "The encoding version of <string-array> must be 0.2.0")
     col <- h5read(file, path)
     # strig arrays are stored as
@@ -204,7 +211,7 @@ read_df_col_str_array <- function(file, path){
 }
 
 read_df_col_cat <- function(file, path){
-    log_debug(paste0("Start read_df_col_cat: ", path, "..."))
+    logger::log_debug(paste0("Start read_df_col_cat: ", path, "..."))
 
     assert(read_encoding_version(file, path), '0.2.0', "The encoding version of <categorical> must be 0.2.0")
 
@@ -239,13 +246,13 @@ read_df_col <- function(file, path){
     } else {
         stop(paste0("Unknown column type", path))
     }
-    log_debug(paste0("Finish read_df_col: ", path, "..."))
+    logger::log_debug(paste0("Finish read_df_col: ", path, "..."))
     return(col)
 }
 
 
 read_df <- function(file, path){
-    log_debug(paste0("Start read_df: ", path, "..."))
+    logger::log_debug(paste0("Start read_df: ", path, "..."))
     # Code assumes that df exists, so check it before call the funciton!
     assert(read_encoding_type(file, path), 'dataframe', "The encoding type of AnnData file must be dataframe")
     assert(read_encoding_version(file, path), '0.2.0', "The encoding version of AnnData file must be 0.2.0")
@@ -264,26 +271,26 @@ read_df <- function(file, path){
     }
 
     colnames(df) <- col_order
-    log_debug("Finish read_df!")
+    logger::log_debug("Finish read_df!")
     return(df)
 }
 
 
 get_obs <- function(file){
-    log_info("Start get_obs ...")
+    logger::log_info("Start get_obs ...")
     path = "/obs"
     obs <- read_df(file, path)
-    log_info("Finish get_obs!")
+    logger::log_info("Finish get_obs!")
     return(obs)
 }
 
 
 get_var <- function(file, layer = NaN){
-    log_info("Start get_var ...")
+    logger::log_info("Start get_var ...")
     path = "/var"
     if (layer == "raw") {path <- paste0("/raw", path)}
     var <- read_df(file, path)
-    log_info("Finish get_var!")
+    logger::log_info("Finish get_var!")
     return(var)
 }
 
@@ -299,7 +306,7 @@ adapt_naming <- function(name){
 
 
 get_obsm <- function(file){
-    log_info("Start get_obsm ...")
+    logger::log_info("Start get_obsm ...")
     path <- "/obsm"
     assert(read_encoding_type(file, path), "dict", "The encoding type of AnnData obsm section must be <dict>")
     assert(read_encoding_version(file, path), "0.1.0", "The encoding version of AnnData <dict> must be 0.1.0")
@@ -317,20 +324,20 @@ get_obsm <- function(file){
             matrix <- read_dense_matrix(file, emb_path, FALSE)
         } else if (type == "dataframe") {
             # TODO: do we need to implement it?
-            log_warn("DataFrame in obsm is not supported yet, skip it...")
+            logger::log_warn("DataFrame in obsm is not supported yet, skip it...")
         }else {
             stop(paste0("Unknown encoding type", emb_path))
         }
         adapted_name <- adapt_naming(emb_name)
         obsm[[adapted_name]] <- matrix
     }
-    log_info("Finish get_obsm!")
+    logger::log_info("Finish get_obsm!")
     return(obsm)
 }
 
 
 get_raw_X_var <- function(file){
-    log_info("Start get_raw_X_var ...")
+    logger::log_info("Start get_raw_X_var ...")
     path <- "/raw"
 
     raw_group <- NULL
@@ -340,7 +347,7 @@ get_raw_X_var <- function(file){
         raw_group = H5Gopen(file, path)
         on.exit(H5Gclose(raw_group))
     }, error = function(e){
-        log_info("No raw data found")
+        logger::log_info("No raw data found")
     })
 
     # If 'raw_group' is NULL, return early
@@ -351,7 +358,7 @@ get_raw_X_var <- function(file){
     raw.X <- get_X(file, paste0(path, "/X"))
     raw.var <- get_var(file, layer = "raw")
     res <- list(X = raw.X, var = raw.var)
-    log_info("Finish get_raw_X_var!")
+    logger::log_info("Finish get_raw_X_var!")
     return(res)
 }
 
@@ -359,7 +366,7 @@ get_raw_X_var <- function(file){
 read_mapping <- function(file, path, transpose) {
     # Function assumes that the mapping exists in the file
     # Check it before the call!
-    log_debug(paste0("Start read_mapping: ", path, "..."))
+    logger::log_debug(paste0("Start read_mapping: ", path, "..."))
 
     assert(read_encoding_type(file, path), "dict", paste0("The encoding type of AnnData mapping section ", path ," must be <dict>"))
     assert(read_encoding_version(file, path), "0.1.0", paste0("The encoding version of AnnData <dict> ", path ," must be 0.1.0"))
@@ -375,7 +382,7 @@ read_mapping <- function(file, path, transpose) {
     for (element in elements){
         element_path <- paste0(path, "/", element)
         element_type <- read_encoding_type(file, element_path)
-        log_debug(paste0("Read element: ", element, " with type: ", element_type))
+        logger::log_debug(paste0("Read element: ", element, " with type: ", element_type))
         if (element_type == "dict") {
             values <- read_mapping(file, element_path)
         } else if (element_type == "dataframe") {
@@ -396,12 +403,12 @@ read_mapping <- function(file, path, transpose) {
         new_name <- adapt_naming(element)
         result[[ new_name ]] <- values
     }
-    log_debug("Finish read_mapping!")
+    logger::log_debug("Finish read_mapping!")
     return(result)
 }
 
 get_layers <- function(file) {
-    log_info("Start get_layers ...")
+    logger::log_info("Start get_layers ...")
     path <- "/layers"     
     layers_group <- NULL
 
@@ -410,7 +417,7 @@ get_layers <- function(file) {
         layers_group = H5Gopen(file, path)
         on.exit(H5Gclose(layers_group))
     }, error = function(e){
-        log_info("No layers data found")
+        logger::log_info("No layers data found")
     })
 
     if (is.null(layers_group)) {
@@ -421,26 +428,26 @@ get_layers <- function(file) {
     assert(read_encoding_version(file, path), "0.1.0", "The encoding version of AnnData <dict> must be 0.1.0")
 
     result <- read_mapping(file, path, transpose = TRUE)
-    log_info("Finish get_layers!")
+    logger::log_info("Finish get_layers!")
     return(result)
 }
 
 
 get_uns <- function(file) {
-    log_info("Start get_uns ...")
+    logger::log_info("Start get_uns ...")
     path <- "/uns"
 
     assert(read_encoding_type(file, path), "dict", "The encoding type of AnnData uns section must be <dict>")
     assert(read_encoding_version(file, path), "0.1.0", "The encoding version of AnnData <dict> must be 0.1.0")
 
     result <- read_mapping(file, path, transpose = FALSE)
-    log_info("Finish get_uns!")
+    logger::log_info("Finish get_uns!")
     return(result)
 }
 
 
 read_h5ad <- function(path) {
-    log_info(paste0("Start read_h5ad: path=", path, " ..."))
+    logger::log_info(paste0("Start read_h5ad: path=", path, " ..."))
     f <- H5Fopen(path)
     on.exit(H5Fclose(f))
     
@@ -452,11 +459,11 @@ read_h5ad <- function(path) {
     var <- get_var(f)
     rownames(x) <- rownames(var)
     colnames(x) <- rownames(obs)
-    log_debug("Rownames and colnames for X data updated")
+    logger::log_debug("Rownames and colnames for X data updated")
     obsm <- get_obsm(f)
     raw <- get_raw_X_var(f)
     if (!is.null(raw)) {
-        log_debug("Update rownames and colnames for raw data")
+        logger::log_debug("Update rownames and colnames for raw data")
         rownames(raw$X) <- rownames(var)
         colnames(raw$X) <- rownames(obs)
     }
@@ -464,6 +471,6 @@ read_h5ad <- function(path) {
     uns <- get_uns(f)
 
     anndata <- list(X = x, obs = obs, var = var, obsm = obsm, raw = raw, layers = layers, uns = uns)
-    log_info("Finish read_h5ad!")
+    logger::log_info("Finish read_h5ad!")
     return(anndata)
 }
