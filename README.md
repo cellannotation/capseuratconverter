@@ -16,10 +16,10 @@ After that it could be runned in itterative mode mounting directory with code (m
 docker run -it h5rds
 ```
 
-Or `src` directory could be mounted to support active development without rebuild the docker container:
+Or `R` directory could be mounted to support active development without rebuild the docker container:
 
 ```bash
-docker run -it -v "/path_to_src:/src" h5rds 
+docker run -it -v "/your_path_to_R:/R" h5rds 
 ```
 
 Now one can import the code with R command:
