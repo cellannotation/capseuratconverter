@@ -140,7 +140,7 @@ read_sparse_matrix <- function(file, path, format, transpose=TRUE){
     # So, we have to convert it in most cases
     if (transpose) { 
         logger::log_debug("transpose matrix")
-        matrix <- t(matrix) 
+        matrix <- Matrix::t(matrix) 
     }
     logger::log_debug("Finish read_sparse_matrix!")
     return(matrix)
