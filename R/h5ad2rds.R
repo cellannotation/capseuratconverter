@@ -1,7 +1,3 @@
-library(rhdf5)
-library(Matrix)
-
-
 # TODO: contol via the environment variable
 logger::log_threshold("DEBUG")
 
@@ -48,7 +44,7 @@ h5ad_to_seurat <- function(h5ad_path){
     logger::log_debug("Create Seurat ojbect from Assay5")
     seurat_obj <- SeuratObject::CreateSeuratObject(main_assay)
     logger::log_debug("Add obs section as @meta.data")
-    seurat_obj <- AddMetaData(seurat_obj, adata$obs)
+    seurat_obj <- SeuratObject::AddMetaData(seurat_obj, adata$obs)
     logger::log_debug("Add uns section as seurat@misc$uns")
     SeuratObject::Misc(seurat_obj, "uns") <- adata$uns
 
@@ -82,6 +78,7 @@ h5ad_to_seurat <- function(h5ad_path){
 #' @export
 h5ad2rds <- function(h5ad_path) {
     srt <- h5ad_to_seurat(h5ad_path)
+    rds_path <- gsub(".h5ad$", ".rds", h5ad_path)
     saveRDS(srt, rds_path)
     logger::log_info(paste0("Convertion done! File saved to: ", rds_path))
     return(rds_path)
