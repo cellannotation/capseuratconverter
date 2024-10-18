@@ -38,8 +38,8 @@ h5ad_to_seurat <- function(h5ad_path){
         # Raw layer exists
         logger::log_debug("Raw layer found in h5ad file! Use assay@layers$counts=adata.raw.X, assay@layers$data=adata.X")
         main_assay <- SeuratObject::CreateAssay5Object(counts = adata$raw$X, data = adata$X)
-        logger::log_debug("Add raw.var as assay@meta.data")
-        main_assay <- SeuratObject::AddMetaData(main_assay, adata$raw$var)  # use raw as it is wider
+        logger::log_debug("Add var as assay@meta.data")
+        main_assay <- SeuratObject::AddMetaData(main_assay, adata$var)  # use raw as it is wider
     }
     logger::log_debug("Create Seurat ojbect from Assay5")
     seurat_obj <- SeuratObject::CreateSeuratObject(main_assay)
