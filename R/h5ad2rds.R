@@ -1,4 +1,31 @@
-source("R/logs.R")
+library(log4r)
+
+log_layout <- default_log_layout()
+log_console_appender <- console_appender(layout = log_layout)
+log_file_appender <- file_appender(log_file_name,
+  append = TRUE,
+  layout = log_layout
+)
+log <- log4r::logger(
+  threshold = "DEBUG",
+  appenders = list(log_console_appender, log_file_appender)
+)
+
+log_info <- function(msg) {
+  log4r::info(log, msg)
+}
+
+log_error <- function(msg) {
+  log4r::error(log, msg)
+}
+
+log_debug <- function(msg) {
+  log4r::debug(log, msg)
+}
+
+log_warn <- function(msg) {
+  log4r::warn(log, msg)
+}
 
 #' Convert H5AD file to Seurat object
 #'
