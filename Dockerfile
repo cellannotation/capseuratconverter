@@ -4,7 +4,7 @@ RUN R -e "install.packages('BiocManager')"
 RUN R -e "BiocManager::install('rhdf5')"
 RUN R -e "BiocManager::install('SeuratObject')"
 RUN R -e "BiocManager::install('Matrix')"
-RUN R -e "BiocManager::install('logger')"
+RUN R -e "BiocManager::install('log4r')"
 
 
 RUN apt-get update && apt-get install -y \

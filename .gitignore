@@ -2,3 +2,4 @@
 *.rds
 /tmp
 /data
+.DS_Store
