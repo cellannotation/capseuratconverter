@@ -1,30 +1,40 @@
 # capseuratconverter
-The dedicated repo for h5ad to Seurat-rds files convertion
 
+The `capseuratconverter` package provides functions to convert AnnData (`.h5ad`) files to Seurat v5 objects and saves them as RDS files. The package was created especially for the [Cell Annotation Project](https://celltype.info/) (CAP), so please test if it suits your needs. It is written in pure R, with no `reticulate` dependencies. The package currently supports AnnData (`.h5ad`) files created via AnnData v0.10+ and converts the following fields: `X`, `obs`, `var`, `raw.X`, `raw.var`, `obsm`, and `uns`.
 
-# How to run
+## Installation
 
-The docker file is build on `satijalab/seurat:5.0.0`. To buld the image run:
-
-```bash
-docker build . -t "h5rds"
-```
-
-After that it could be runned in itterative mode mounting directory with code (mounting is needed temporarly to dynamically catch changes in script):
-
-```bash
-docker run -it h5rds
-```
-
-Or `R` directory could be mounted to support active development without rebuild the docker container:
-
-```bash
-docker run -it -v "/your_path_to_R:/R" h5rds 
-```
-
-Now one can import the code with R command:
+The package isn't published on CRAN, so it can be installed using `devtools`:
 
 ```R
-source("src/h5ad2rds.R")
+install.packages('devtools')
+devtools::install_github('cellannotation/capseuratconverter')
 ```
 
+Alternatively, you can install it from GitHub releases (the fastest way):
+
+```R
+destfile <- "capseuratconverter.tar.gz"
+url <- "https://github.com/cellannotation/capseuratconverter/releases/download/v0.2/capseuratconverter_0.2.tar.gz"
+download.files(url=url, destfile=destfile)
+install.packages(destfile, repos = NULL, type='source')
+file.remove(destfile)
+```
+
+## Usage
+
+There are two main functions in the package: 
+- `h5ad_to_seurat(h5ad_path)` Takes the path to an `.h5ad` file and return Seurat v5 object.
+- `h5ad2rds(h5ad_path)` Takes the path to an .h5ad file, runs `h5ad_to_seurat`, and saves the object to the same path as the input but replaces the `.h5ad` extension with `.rds`. Returns the path to the RDS file.
+
+## Dependencies
+
+- R version >= 4.0.0
+- SeuratObject >= 5.0.0
+- Matrix
+- rhdf5
+- log4r
+
+## Contribution
+
+Fill free to contribute with new issues or PRs! The project is small so there is no special guidlines for that.
