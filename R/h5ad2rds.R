@@ -1,14 +1,20 @@
-library(log4r)
+log_layout <- log4r::default_log_layout()
+log_console_appender <- log4r::console_appender(layout = log_layout)
 
-log_layout <- default_log_layout()
-log_console_appender <- console_appender(layout = log_layout)
-log_file_appender <- file_appender(log_file_name,
-  append = TRUE,
-  layout = log_layout
-)
+appenders <- list(log_console_appender)
+
+if (exists("log_file_name")) {
+  log_file_appender <- log4r::file_appender(
+    log_file_name,
+    append = TRUE,
+    layout = log_layout
+  )
+  appenders <- list(log_console_appender, log_file_appender)
+}
+
 log <- log4r::logger(
   threshold = "DEBUG",
-  appenders = list(log_console_appender, log_file_appender)
+  appenders = appenders
 )
 
 log_info <- function(msg) {
