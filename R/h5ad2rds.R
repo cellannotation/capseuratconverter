@@ -240,13 +240,8 @@ read_df_col_cat <- function(file, path) {
 
   codes <- rhdf5::h5read(file, code_key)
   categories <- rhdf5::h5read(file, cat_key)
-
   # codes is a vector from 0 to n_categories - 1
-  # need add -1 to handle empty values
-  # TODO: check if recognized as NaN correctly
-  categories <- c(NULL, categories)
-  levels <- c(-1:(length(categories) - 2))
-
+  levels <- c(0:(length(categories) - 1))
   col <- factor(codes, levels = levels, labels = categories)
   return(col)
 }
