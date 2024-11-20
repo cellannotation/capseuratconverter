@@ -40,8 +40,8 @@ log_warn <- function(msg) {
 #' @details This function reads the h5ad file using 'rhdf5' package
 #' and create named list with all fields existing in the file. After that,
 #' Seurat5 object is created from the list.
-#' The package was created for Cell Annotation Platform (CAP) project and expects that AnnData file was created with
-#' python AnnData package of version 0.8+
+#' The package was created for Cell Annotation Platform project and expects
+#' that AnnData file was created with python AnnData package of version 0.8+
 #'
 #' Resulting Seurat object will have the only assay named 'RNA'.
 #'
