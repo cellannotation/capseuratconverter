@@ -21,10 +21,8 @@ RUN apt-get update && apt-get install -y \
     libtiff5-dev \
     libjpeg-dev
 
-# Install capseuratconverter
-RUN wget https://github.com/cellannotation/capseuratconverter/releases/download/v0.2/capseuratconverter_0.2.tar.gz -O /tmp/capseuratconverter.tar.gz
-RUN R -e "install.packages('/tmp/capseuratconverter.tar.gz', repos = NULL, type='source')"
-RUN rm /tmp/capseuratconverter.tar.gz
+RUN R -e "install.packages('devtools')"
+RUN R -e "devtools::install_github('cellannotation/capseuratconverter')"
 
 COPY . /app
 
