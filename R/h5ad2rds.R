@@ -87,7 +87,6 @@ h5ad_to_seurat <- function(h5ad_path) {
   seurat_obj <- SeuratObject::AddMetaData(seurat_obj, adata$obs)
   log_debug("Add uns records in seurat@misc")
   for (key in names(adata$uns)) {
-    log_error(paste0(key, ":", adata$uns$key))
     SeuratObject::Misc(seurat_obj, key) <- adata$uns[[key]]
   }
 
