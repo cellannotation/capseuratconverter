@@ -1,6 +1,5 @@
 library(log4r)
 
-log_file_name <- "logs.txt"
 log_layout <- default_log_layout()
 log_console_appender <- console_appender(layout = log_layout)
 log_file_appender <- file_appender(log_file_name,
