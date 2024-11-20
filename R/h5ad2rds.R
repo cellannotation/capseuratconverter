@@ -64,27 +64,43 @@ h5ad_to_seurat <- function(h5ad_path) {
     log_debug("No raw layer found in h5ad file! Use assay@layers$counts=adata.X")
     main_assay <- SeuratObject::CreateAssay5Object(counts = adata$X)
     log_debug("Add var as assay@meta.data")
-    main_assay <- SeuratObject::AddMetaData(main_assay, adata$var) # use raw as it is wider
+    main_assay <- SeuratObject::AddMetaData(
+      main_assay,
+      adata$var
+    ) # use raw as it is wider
   } else {
     # Raw layer exists
     log_debug("Raw layer found in h5ad file! Use assay@layers$counts=adata.raw.X, assay@layers$data=adata.X")
-    main_assay <- SeuratObject::CreateAssay5Object(counts = adata$raw$X, data = adata$X)
+    main_assay <- SeuratObject::CreateAssay5Object(
+      counts = adata$raw$X,
+      data = adata$X
+    )
     log_debug("Add var as assay@meta.data")
-    main_assay <- SeuratObject::AddMetaData(main_assay, adata$var) # use raw as it is wider
+    main_assay <- SeuratObject::AddMetaData(
+      main_assay,
+      adata$var
+    ) # use raw as it is wider
   }
   log_debug("Create Seurat ojbect from Assay5")
   seurat_obj <- SeuratObject::CreateSeuratObject(main_assay)
   log_debug("Add obs section as @meta.data")
   seurat_obj <- SeuratObject::AddMetaData(seurat_obj, adata$obs)
-  log_debug("Add uns section as seurat@misc$uns")
-  SeuratObject::Misc(seurat_obj, "uns") <- adata$uns
+  log_debug("Add uns records in seurat@misc")
+  for (key in names(adata$uns)) {
+    log_error(paste0(key, ":", adata$uns$key))
+    SeuratObject::Misc(seurat_obj, key) <- adata$uns[[key]]
+  }
 
   log_debug("Add obsm section as seurat@reductions")
   for (emb in names(adata$obsm)) {
     matrix <- adata$obsm[[emb]]
     colnames(matrix) <- paste0(emb, seq_len(ncol(adata$obsm[[emb]])))
     rownames(matrix) <- rownames(adata$obs)
-    seurat_obj[[emb]] <- SeuratObject::CreateDimReducObject(embeddings = matrix, key = paste0(emb, "_"), assay = "RNA")
+    seurat_obj[[emb]] <- SeuratObject::CreateDimReducObject(
+      embeddings = matrix,
+      key = paste0(emb, "_"),
+      assay = "RNA"
+    )
     log_debug(paste0("Added embeddings: ", emb))
   }
   log_debug("Finish cap_h5ad_to_seurat!")
