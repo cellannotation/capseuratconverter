@@ -1,14 +1,20 @@
-library(log4r)
+log_layout <- log4r::default_log_layout()
+log_console_appender <- log4r::console_appender(layout = log_layout)
 
-log_layout <- default_log_layout()
-log_console_appender <- console_appender(layout = log_layout)
-log_file_appender <- file_appender(log_file_name,
-  append = TRUE,
-  layout = log_layout
-)
+appenders <- list(log_console_appender)
+
+if (exists("log_file_name")) {
+  log_file_appender <- log4r::file_appender(
+    log_file_name,
+    append = TRUE,
+    layout = log_layout
+  )
+  appenders <- list(log_console_appender, log_file_appender)
+}
+
 log <- log4r::logger(
   threshold = "DEBUG",
-  appenders = list(log_console_appender, log_file_appender)
+  appenders = appenders
 )
 
 log_info <- function(msg) {
@@ -34,8 +40,8 @@ log_warn <- function(msg) {
 #' @details This function reads the h5ad file using 'rhdf5' package
 #' and create named list with all fields existing in the file. After that,
 #' Seurat5 object is created from the list.
-#' The package was created for Cell Annotation Platform (CAP) project and expects that AnnData file was created with
-#' python AnnData package of version 0.8+
+#' The package was created for Cell Annotation Platform project and expects
+#' that AnnData file was created with python AnnData package of version 0.8+
 #'
 #' Resulting Seurat object will have the only assay named 'RNA'.
 #'
@@ -58,27 +64,42 @@ h5ad_to_seurat <- function(h5ad_path) {
     log_debug("No raw layer found in h5ad file! Use assay@layers$counts=adata.X")
     main_assay <- SeuratObject::CreateAssay5Object(counts = adata$X)
     log_debug("Add var as assay@meta.data")
-    main_assay <- SeuratObject::AddMetaData(main_assay, adata$var) # use raw as it is wider
+    main_assay <- SeuratObject::AddMetaData(
+      main_assay,
+      adata$var
+    ) # use raw as it is wider
   } else {
     # Raw layer exists
     log_debug("Raw layer found in h5ad file! Use assay@layers$counts=adata.raw.X, assay@layers$data=adata.X")
-    main_assay <- SeuratObject::CreateAssay5Object(counts = adata$raw$X, data = adata$X)
+    main_assay <- SeuratObject::CreateAssay5Object(
+      counts = adata$raw$X,
+      data = adata$X
+    )
     log_debug("Add var as assay@meta.data")
-    main_assay <- SeuratObject::AddMetaData(main_assay, adata$var) # use raw as it is wider
+    main_assay <- SeuratObject::AddMetaData(
+      main_assay,
+      adata$var
+    )
   }
   log_debug("Create Seurat ojbect from Assay5")
   seurat_obj <- SeuratObject::CreateSeuratObject(main_assay)
   log_debug("Add obs section as @meta.data")
   seurat_obj <- SeuratObject::AddMetaData(seurat_obj, adata$obs)
-  log_debug("Add uns section as seurat@misc$uns")
-  SeuratObject::Misc(seurat_obj, "uns") <- adata$uns
+  log_debug("Add uns records in seurat@misc")
+  for (key in names(adata$uns)) {
+    SeuratObject::Misc(seurat_obj, key) <- adata$uns[[key]]
+  }
 
   log_debug("Add obsm section as seurat@reductions")
   for (emb in names(adata$obsm)) {
     matrix <- adata$obsm[[emb]]
     colnames(matrix) <- paste0(emb, seq_len(ncol(adata$obsm[[emb]])))
     rownames(matrix) <- rownames(adata$obs)
-    seurat_obj[[emb]] <- SeuratObject::CreateDimReducObject(embeddings = matrix, key = paste0(emb, "_"), assay = "RNA")
+    seurat_obj[[emb]] <- SeuratObject::CreateDimReducObject(
+      embeddings = matrix,
+      key = paste0(emb, "_"),
+      assay = "RNA"
+    )
     log_debug(paste0("Added embeddings: ", emb))
   }
   log_debug("Finish cap_h5ad_to_seurat!")
@@ -234,13 +255,8 @@ read_df_col_cat <- function(file, path) {
 
   codes <- rhdf5::h5read(file, code_key)
   categories <- rhdf5::h5read(file, cat_key)
-
   # codes is a vector from 0 to n_categories - 1
-  # need add -1 to handle empty values
-  # TODO: check if recognized as NaN correctly
-  categories <- c(NULL, categories)
-  levels <- c(-1:(length(categories) - 2))
-
+  levels <- c(0:(length(categories) - 1))
   col <- factor(codes, levels = levels, labels = categories)
   return(col)
 }
@@ -488,13 +504,13 @@ read_h5ad <- function(path) {
   raw <- get_raw_X_var(f)
   if (!is.null(raw)) {
     log_debug("Update rownames and colnames for raw data")
-    rownames(raw$X) <- rownames(var)
+    rownames(raw$X) <- rownames(raw$var)
     colnames(raw$X) <- rownames(obs)
   }
   layers <- get_layers(f)
   uns <- get_uns(f)
 
-  anndata <- list(X = x, obs = obs, var = var, obsm = obsm, raw = raw, layers = layers, uns = uns)
+  anndata <- list(X=x, obs=obs, var=var, obsm=obsm, raw=raw, layers=layers, uns=uns)
   log_info("Finish read_h5ad!")
   return(anndata)
 }
