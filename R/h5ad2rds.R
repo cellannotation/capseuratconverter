@@ -79,7 +79,7 @@ h5ad_to_seurat <- function(h5ad_path) {
     main_assay <- SeuratObject::AddMetaData(
       main_assay,
       adata$var
-    ) # use raw as it is wider
+    )
   }
   log_debug("Create Seurat ojbect from Assay5")
   seurat_obj <- SeuratObject::CreateSeuratObject(main_assay)
@@ -504,13 +504,13 @@ read_h5ad <- function(path) {
   raw <- get_raw_X_var(f)
   if (!is.null(raw)) {
     log_debug("Update rownames and colnames for raw data")
-    rownames(raw$X) <- rownames(var)
+    rownames(raw$X) <- rownames(raw$var)
     colnames(raw$X) <- rownames(obs)
   }
   layers <- get_layers(f)
   uns <- get_uns(f)
 
-  anndata <- list(X = x, obs = obs, var = var, obsm = obsm, raw = raw, layers = layers, uns = uns)
+  anndata <- list(X=x, obs=obs, var=var, obsm=obsm, raw=raw, layers=layers, uns=uns)
   log_info("Finish read_h5ad!")
   return(anndata)
 }
