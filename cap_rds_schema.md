@@ -2,7 +2,7 @@
 
 ## AnnData fields mapping to Seurat5
 
-In the table below `seurat_obj` represents Seurat5 object, the result of conversion. It consists of the only assay which represents `Assay5` object and defines as `assay <- seurat_obs[["RNA"]]`
+In the table below `seurat_obj` represents Seurat5 object, the result of the conversion. It consists of only one assay, which represents an `Assay5` object and is defined as `assay <- seurat_obs[["RNA"]]`
 
 | AnnData Component  | Seurat Component                       |
 |--------------------|----------------------------------------|
@@ -17,8 +17,9 @@ In the table below `seurat_obj` represents Seurat5 object, the result of convers
 
 ## Naming
 
-The Seurat5 RDS schema (rules for field namings) mirrors the input AnnData file schema. So, if one use AnnData file from [Cell Annotation Platform](https://celltype.info/) the same namings will be applied for Seurat5 object (see [Cap-AnnData schema](https://github.com/cellannotation/cell-annotation-schema/blob/main/docs/cap_anndata_schema.md)). The only exception is names of keys in mapping fields like `.uns` and `.obsm`. For those fields the all underscores `_` will be replaced with `.`, and if the key starts with `X_`, this prefix will be removed. Examples:
+The Seurat5 RDS schema (rules for field naming) mirrors the input AnnData file schema. So, if one uses an AnnData file from the [Cell Annotation Platform](https://celltype.info/) the same naming conventions will be applied to the Seurat5 object (see [Cap-AnnData schema](https://github.com/cellannotation/cell-annotation-schema/blob/main/docs/cap_anndata_schema.md)). The only exception is the names of keys in mapping fields like `.uns` and `.obsm`. For those fields, all underscores `_` will be replaced with dots `.`, and if the key starts with `X_`, this prefix will be removed. 
 
+Examples:
  
 | Field name in AnnData      | Field name in Seurat object            |
 |----------------------------|----------------------------------------|
