@@ -1,5 +1,5 @@
 *.h5ad
 *.rds
-/tmp
-/data
+**/tmp
+**/data
 .DS_Store
