@@ -21,8 +21,6 @@ RUN apt-get update && apt-get install -y \
     libtiff5-dev \
     libjpeg-dev
 
-RUN R -e "install.packages('devtools')"
-RUN R -e "devtools::install_github('cellannotation/capseuratconverter')"
 
 COPY . /app
 

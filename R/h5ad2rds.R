@@ -62,7 +62,7 @@ h5ad_to_seurat <- function(h5ad_path) {
   if (is.null(adata$raw)) {
     # No raw layer
     log_debug("No raw layer found in h5ad file! Use assay@layers$counts=adata.X")
-    main_assay <- SeuratObject::CreateAssay5Object(counts = adata$X)
+    main_assay <- SeuratObject::CreateAssay5Object(data = adata$X)
     log_debug("Add var as assay@meta.data")
     main_assay <- SeuratObject::AddMetaData(
       main_assay,
