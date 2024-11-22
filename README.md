@@ -15,7 +15,7 @@ Alternatively, you can install it from GitHub releases (the fastest way):
 
 ```R
 destfile <- "capseuratconverter.tar.gz"
-url <- "https://github.com/cellannotation/capseuratconverter/releases/download/v0.2/capseuratconverter_0.2.tar.gz"
+url <- "https://github.com/cellannotation/capseuratconverter/releases/download/v0.3/capseuratconverter_0.3.tar.gz"
 download.files(url=url, destfile=destfile)
 install.packages(destfile, repos = NULL, type='source')
 file.remove(destfile)
