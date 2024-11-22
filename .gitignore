@@ -3,3 +3,4 @@
 **/tmp
 **/data
 .DS_Store
+*.tar.gz
