@@ -5,7 +5,7 @@ Authors@R: c(
     person("Roman", "Mukhin", email = "roman@ebookapplications.com", role = c("aut", "cre")),
     person("Evan", "Biederstedt", role = "aut"),
     person("Andrey", "Isaev", role = "aut"))
-Description: The package provides functions to convert AnnData (.h5ad) files to Seurat v5 objects and saves them as RDS files. The package was created especially for the Cell Annotation Project (CAP), so please test if it suits your needs. It is written in pure R, with no reticulate dependencies. The package currently supports AnnData (.h5ad) files created via AnnData v0.10+ and converts the following fields: X, obs, var, raw.X, raw.var, obsm, and uns.
+Description: The package provides functions to convert AnnData (.h5ad) files to Seurat v5 objects and saves them as RDS files. The package was created specically for the Cell Annotation Project (CAP), so please test it first to see it it meets your requirements. It is written in pure R, with no reticulate dependencies. The package currently supports AnnData (.h5ad) files created via AnnData v0.10+ and converts the following fields: X, obs, var, raw.X, raw.var, obsm, and uns.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

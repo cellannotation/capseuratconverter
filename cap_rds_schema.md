@@ -2,7 +2,7 @@
 
 ## AnnData fields mapping to Seurat5
 
-In the table below `seurat_obj` represents Seurat5 object, the result of the conversion. It consists of only one assay, which represents an `Assay5` object and is defined as `assay <- seurat_obs[["RNA"]]`
+In the table below `seurat_obj` represents a Seurat5 object, the result of the conversion. It consists of only one assay, which represents an `Assay5` object and is defined as `assay <- seurat_obs[["RNA"]]`
 
 | AnnData Component  | Seurat Component                       |
 |--------------------|----------------------------------------|
@@ -13,7 +13,7 @@ In the table below `seurat_obj` represents Seurat5 object, the result of the con
 | `adata.obs`        | `seurat_obj@meta.data`                 |
 | `adata.uns`        | `seurat_obj@misc`                      |
 | `adata.obsm`       | `seurat_obj@reductions`                |
-`*` - if exists
+`*` - if it exists
 
 ## Naming
 
