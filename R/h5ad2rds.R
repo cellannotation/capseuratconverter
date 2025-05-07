@@ -421,7 +421,7 @@ read_mapping <- function(file, path, transpose) {
     element_type <- read_encoding_type(file, element_path)
     log_debug(paste0("Read element: ", element, " with type: ", element_type))
     if (element_type == "dict") {
-      values <- read_mapping(file, element_path)
+      values <- read_mapping(file, element_path, transpose = transpose)
     } else if (element_type == "dataframe") {
       values <- read_df(file, element_path)
     } else if (element_type == "array") {
