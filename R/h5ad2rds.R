@@ -255,9 +255,17 @@ read_df_col_cat <- function(file, path) {
 
   codes <- rhdf5::h5read(file, code_key)
   categories <- rhdf5::h5read(file, cat_key)
-  # codes is a vector from 0 to n_categories - 1
-  levels <- c(0:(length(categories) - 1))
-  col <- factor(codes, levels = levels, labels = categories)
+
+  if (length(categories) > 0) {
+    # codes is a vector from 0 to n_categories - 1
+    levels <- c(0:(length(categories) - 1))
+    col <- factor(codes, levels = levels, labels = categories)
+  } else {
+    log_debug("Empty categories found")
+    levels <- c(0)
+    col <- factor(codes, levels = levels)
+  }
+
   return(col)
 }
 
