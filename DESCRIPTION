@@ -1,6 +1,6 @@
 Package: capseuratconverter
 Title: Convert AnnData H5ad File To Seurat5 Object
-Version: 0.3
+Version: 0.4
 Authors@R: c(
     person("Roman", "Mukhin", email = "roman@ebookapplications.com", role = c("aut", "cre")),
     person("Evan", "Biederstedt", role = "aut"),
