@@ -24,8 +24,10 @@ file.remove(destfile)
 ## Usage
 
 There are two main functions in the package: 
-- `h5ad_to_seurat(h5ad_path)` Takes the path to an `.h5ad` file and returns a Seurat v5 object.
-- `h5ad2rds(h5ad_path)` Takes the path to an .h5ad file, runs `h5ad_to_seurat`, and saves the object to the same path as the input but replaces the `.h5ad` extension with `.rds`. Returns the path to the RDS file.
+- `h5ad_to_seurat(h5ad_path, ignore_bad_format)` Takes the path to an `.h5ad` file and returns a Seurat v5 object.
+- `h5ad2rds(h5ad_path, ignore_bad_format)` Takes the path to an .h5ad file, runs `h5ad_to_seurat`, and saves the object to the same path as the input but replaces the `.h5ad` extension with `.rds`. Returns the path to the RDS file.
+
+If `ignore_bad_format` is set to `TRUE`, the function will ignore bad formats in obs/var/uns/obsm/varm fields and will continue convertion. If set to `FALSE`, the function will throw an error if any bad formats are detected.
 
 ## Dependencies
 
