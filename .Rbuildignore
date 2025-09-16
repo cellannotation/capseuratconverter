@@ -4,5 +4,6 @@
 ^.*\.tar.gz$
 Dockerfile
 ^data$
+^.venv$
 ^tmp$
 ^DS_Store$
