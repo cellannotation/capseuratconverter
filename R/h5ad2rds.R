@@ -61,7 +61,9 @@ h5ad_to_seurat <- function(h5ad_path, ignore_bad_format = FALSE) {
 
   if (is.null(adata$raw)) {
     # No raw layer
-    log_debug("No raw layer found in h5ad file! Use assay@layers$counts=adata.X")
+    log_debug(
+      "No raw layer found in h5ad file! Use assay@layers$counts=adata.X"
+    )
     main_assay <- SeuratObject::CreateAssay5Object(data = adata$X)
     log_debug("Add var as assay@meta.data")
     main_assay <- SeuratObject::AddMetaData(
@@ -70,7 +72,9 @@ h5ad_to_seurat <- function(h5ad_path, ignore_bad_format = FALSE) {
     ) # use raw as it is wider
   } else {
     # Raw layer exists
-    log_debug("Raw layer found in h5ad file! Use assay@layers$counts=adata.raw.X, assay@layers$data=adata.X")
+    log_debug(
+      "Raw layer found in h5ad file! Use assay@layers$counts=adata.raw.X, assay@layers$data=adata.X"
+    )
     main_assay <- SeuratObject::CreateAssay5Object(
       counts = adata$raw$X,
       data = adata$X
@@ -113,8 +117,8 @@ h5ad_to_seurat <- function(h5ad_path, ignore_bad_format = FALSE) {
 #'
 #' @param h5ad_path The path to the H5AD file.
 #'
-#' @details This function creates Seurat5 object via h5ad_to_seurat and saves it to RDS file named
-#' the same way as input file but with .rds extension.
+#' @details This function creates Seurat5 object via h5ad_to_seurat and saves
+#' it to RDS file named the same way as input file but with .rds extension.
 #'
 #' @return String, the path to the generated RDS file.
 #'
