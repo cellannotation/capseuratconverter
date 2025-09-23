@@ -236,16 +236,16 @@ read_dense_matrix <- function(file, path, transpose) {
 }
 
 
-get_X <- function(file, path) {
+get_X <- function(file, path, transpose = TRUE) {
   log_info(paste0("Start get_X at path ", path, " ..."))
   encoding_type <- read_encoding_type(file, path)
 
   if (encoding_type == "csr_matrix") {
-    matrix <- read_sparse_matrix(file, path, "csr")
+    matrix <- read_sparse_matrix(file, path, "csr", transpose)
   } else if (encoding_type == "csc_matrix") {
-    matrix <- read_sparse_matrix(file, path, "csc")
+    matrix <- read_sparse_matrix(file, path, "csc", transpose)
   } else if (encoding_type == "array") {
-    matrix <- read_dense_matrix(file, path, TRUE)
+    matrix <- read_dense_matrix(file, path, transpose)
   } else {
     stop(paste0("Unknown encoding type", encoding_type))
   }
@@ -409,11 +409,17 @@ adapt_naming <- function(name) {
 }
 
 
-get_obsm <- function(file) {
+get_obsm <- function(file, ignore_bad_format) {
   log_info("Start get_obsm ...")
   path <- "/obsm"
-  assert(read_encoding_type(file, path), "dict", "The encoding type of AnnData obsm section must be <dict>")
-  assert(read_encoding_version(file, path), "0.1.0", "The encoding version of AnnData <dict> must be 0.1.0")
+  assert(
+    read_encoding_type(file, path), "dict",
+    "The encoding type of AnnData obsm section must be <dict>"
+  )
+  assert(
+    read_encoding_version(file, path), "0.1.0",
+    "The encoding version of AnnData <dict> must be 0.1.0"
+  )
 
   obsm_group <- rhdf5::H5Gopen(file, path)
   on.exit(rhdf5::H5Gclose(obsm_group))
@@ -424,13 +430,16 @@ get_obsm <- function(file) {
   for (emb_name in obsm_list[["name"]]) {
     emb_path <- paste0(path, "/", emb_name)
     type <- read_encoding_type(file, emb_path)
-    if (type == "array") {
-      matrix <- read_dense_matrix(file, emb_path, FALSE)
+    if (type == "array" || type == "csr_matrix" || type == "csc_matrix") {
+      matrix <- get_X(file, emb_path, transpose = FALSE)
     } else if (type == "dataframe") {
       # TODO: do we need to implement it?
       log_warn("DataFrame in obsm is not supported yet, skip it...")
     } else {
-      stop(paste0("Unknown encoding type", emb_path))
+      log_or_raise(
+        paste0("Unknown encoding type", emb_path),
+        ignore_bad_format
+      )
     }
     adapted_name <- adapt_naming(emb_name)
     obsm[[adapted_name]] <- matrix
@@ -634,7 +643,7 @@ read_h5ad <- function(path, ignore_bad_format) {
   rownames(x) <- rownames(var)
   colnames(x) <- rownames(obs)
   log_debug("Rownames and colnames for X data updated")
-  obsm <- get_obsm(f)
+  obsm <- get_obsm(f, ignore_bad_format = ignore_bad_format)
   raw <- get_raw_X_var(f, ignore_bad_format = ignore_bad_format)
   if (!is.null(raw)) {
     log_debug("Update rownames and colnames for raw data")
