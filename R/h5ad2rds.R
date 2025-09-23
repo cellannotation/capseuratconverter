@@ -166,17 +166,22 @@ read_encoding_type <- function(file, path) {
 
 
 read_sparse_matrix <- function(file, path, format, transpose = TRUE) {
-  log_debug(paste0("Start read_sparse_matrix: ", path, " transpose=", transpose, "..."))
-  assert(read_encoding_version(file, path), "0.1.0", "Sparse matrix must have encoding version 0.1.0")
+  log_debug(
+    paste0("Start read_sparse_matrix: ", path, " transpose=", transpose, "...")
+  )
+  assert(
+    read_encoding_version(file, path), "0.1.0",
+    "Sparse matrix must have encoding version 0.1.0"
+  )
 
   shape <- unlist(read_attr(file, path, "shape"))
-  data <- rhdf5::h5read(file, paste0(path, "/data")) # non zero values
-  indices <- rhdf5::h5read(file, paste0(path, "/indices")) # column indices for csr or row indices for csc
-  indptr <- rhdf5::h5read(file, paste0(path, "/indptr")) # index pointers for csr or column pointers for csc
+  data <- rhdf5::h5read(file, paste0(path, "/data"))
+  indices <- rhdf5::h5read(file, paste0(path, "/indices"))
+  indptr <- rhdf5::h5read(file, paste0(path, "/indptr"))
 
   # Ensure indices and indptr are integers
   indices <- as.integer(indices)
-  indptr <- as.integer(indptr)
+  indptr <- as.numeric(indptr)
 
   if (!is(data, "numeric")) {
     log_debug("data is not numeric, convert it now...")
@@ -184,9 +189,19 @@ read_sparse_matrix <- function(file, path, format, transpose = TRUE) {
   }
 
   if (format == "csr") {
-    matrix <- Matrix::sparseMatrix(j = indices + 1, p = indptr, x = data, dims = shape)
+    matrix <- Matrix::sparseMatrix(
+      j = indices + 1,
+      p = indptr,
+      x = data,
+      dims = shape
+    )
   } else if (format == "csc") {
-    matrix <- Matrix::sparseMatrix(i = indices + 1, p = indptr, x = data, dims = shape)
+    matrix <- Matrix::sparseMatrix(
+      i = indices + 1,
+      p = indptr,
+      x = data,
+      dims = shape
+    )
   } else {
     stop(paste0("Unknown format", format))
   }
